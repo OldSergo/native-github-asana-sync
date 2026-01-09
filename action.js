@@ -5,6 +5,27 @@ const asana = require('asana');
 const yaml = require('js-yaml');
 const { Client4 } = require('@mattermost/client');
 
+const ASANA_CUSTOM_FIELD_STATUS_GID = core.getInput('asana-custom-field-gid', { required: true });
+
+const ASANA_STATUS_OPTIONS = {
+    BACKLOG: '1209127535020553',
+    TO_DO: '1209127535020554', // К выполнению
+    IN_PROGRESS: '1209127535020555', // В работе
+    READY_FOR_REVIEW: '1209139047214641', // Готово к ревью
+    READY_FOR_QA: '1209127535020556', // Готово к QA
+    TESTING: '1209127535020557', // Тестирование
+    NEEDS_REVISION: '1209127535020558', // На доработке
+    DONE: '1209127535020559', // Готово
+};
+
+const getEnumOptionGidByName = (statusName) => {
+    const gid = ASANA_STATUS_OPTIONS[statusName.toUpperCase()];
+    if (!gid) {
+        throw new Error(`Invalid status name provided: ${statusName}. Available options: ${Object.keys(ASANA_STATUS_OPTIONS).join(', ')}`);
+    }
+    return gid;
+};
+
 function buildAsanaClient() {
     const asanaPAT = core.getInput('asana-pat');
 
@@ -559,6 +580,37 @@ async function completeAsanaTask(taskId, completed) {
     }
 }
 
+async function updateAsanaCustomStatus() {
+    const taskId = core.getInput('asana-task-id', { required: true }); 
+    
+    const customFieldGid = core.getInput('asana-custom-field-gid', { required: true });
+    
+    const statusName = core.getInput('asana-status-name', { required: true });
+    
+    try {
+        const enumOptionGid = getEnumOptionGidByName(statusName);
+
+        const client = buildAsanaClient();
+
+        console.info(`Updating custom status field ${customFieldGid} for task ${taskId} to status "${statusName}" (GID: ${enumOptionGid})`);
+
+        const body = {
+            data: {
+                custom_fields: {
+                    [customFieldGid]: enumOptionGid,
+                },
+            },
+        };
+        const opts = {};
+
+        await client.tasks.updateTask(body, taskId, opts);
+        console.log(`Task ${taskId} custom field status successfully updated to "${statusName}".`);
+    } catch (error) {
+        console.error('Error updating custom field status:', error.message);
+        core.setFailed(`Error updating task ${taskId} custom status: ${error.message}`);
+    }
+}
+
 async function sendMessage(client, channelId, message) {
     try {
         const response = await client.createPost({
@@ -658,6 +710,10 @@ async function action() {
         }
         case 'mark-asana-task-complete': {
             await markAsanaTaskComplete();
+            break;
+        }
+        case 'set-asana-custom-status': { 
+            await updateAsanaCustomStatus();
             break;
         }
         default:
