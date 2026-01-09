@@ -581,33 +581,42 @@ async function completeAsanaTask(taskId, completed) {
 }
 
 async function updateAsanaCustomStatus() {
-    const taskId = core.getInput('asana-task-id', { required: true }); 
-    
-    const customFieldGid = core.getInput('asana-custom-field-gid', { required: true });
-    
+    const customFieldGid = core.getInput('asana-custom-field-gid', { required: true }); 
     const statusName = core.getInput('asana-status-name', { required: true });
+    const foundTasks = await findAsanaTasks();
+    
+    if (foundTasks.length === 0) {
+        core.setFailed(`Не удалось найти Asana Task ID в теле Pull Request по заданному триггеру.`);
+        return;
+    }
     
     try {
         const enumOptionGid = getEnumOptionGidByName(statusName);
-
         const client = buildAsanaClient();
 
-        console.info(`Updating custom status field ${customFieldGid} for task ${taskId} to status "${statusName}" (GID: ${enumOptionGid})`);
+        let successCount = 0;
+        
+        for (const taskId of foundTasks) {
+            console.info(`Updating custom status field ${customFieldGid} for task ${taskId} to status "${statusName}" (GID: ${enumOptionGid})`);
 
-        const body = {
-            data: {
-                custom_fields: {
-                    [customFieldGid]: enumOptionGid,
+            const body = {
+                data: {
+                    custom_fields: {
+                        [customFieldGid]: enumOptionGid,
+                    },
                 },
-            },
-        };
-        const opts = {};
+            };
+            const opts = {};
+            await client.tasks.updateTask(body, taskId, opts);
+            console.log(`Task ${taskId} custom field status successfully updated to "${statusName}".`);
+            successCount++;
+        }
+        
+        console.log(`Успешно обновлено ${successCount} задач(и).`);
 
-        await client.tasks.updateTask(body, taskId, opts);
-        console.log(`Task ${taskId} custom field status successfully updated to "${statusName}".`);
     } catch (error) {
         console.error('Error updating custom field status:', error.message);
-        core.setFailed(`Error updating task ${taskId} custom status: ${error.message}`);
+        core.setFailed(`Ошибка при обновлении пользовательского статуса: ${error.message}`);
     }
 }
 
