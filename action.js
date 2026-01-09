@@ -615,8 +615,17 @@ async function updateAsanaCustomStatus() {
         console.log(`Успешно обновлено ${successCount} задач(и).`);
 
     } catch (error) {
+
         console.error('Error updating custom field status:', error.message);
-        core.setFailed(`Ошибка при обновлении пользовательского статуса: ${error.message}`);
+
+        if (error.response?.data?.errors) {
+            console.error('ASANA API Errors:', JSON.stringify(error.response.data.errors, null, 2));
+            const apiErrorMessage = error.response.data.errors.map(e => e.message).join('; ');
+            core.setFailed(`Ошибка при обновлении статуса Asana (Bad Request): ${apiErrorMessage}`);
+        } else {
+            console.error('ASANA General Error:', JSON.stringify(error));
+            core.setFailed(`Ошибка при обновлении пользовательского статуса: ${error.message}`);
+        }
     }
 }
 
