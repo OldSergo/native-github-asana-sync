@@ -81,6 +81,9 @@ inputs:
     asana-task-custom-fields:
         description: 'Asana task custom fields hash, encoded as a JSON string'
         required: false
+    set-asana-custom-status:
+        description: 'Asana task custom status'
+        required: false
 
 runs:
     using: 'node20'
