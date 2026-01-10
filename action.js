@@ -5,8 +5,6 @@ const asana = require('asana');
 const yaml = require('js-yaml');
 const { Client4 } = require('@mattermost/client');
 
-const ASANA_CUSTOM_FIELD_STATUS_GID = core.getInput('asana-custom-field-gid', { required: true });
-
 const ASANA_STATUS_OPTIONS = {
     BACKLOG: '1209127535020553',
     TO_DO: '1209127535020554', // К выполнению

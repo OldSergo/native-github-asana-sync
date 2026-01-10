@@ -11,8 +11,6 @@ const asana = __nccwpck_require__(6727);
 const yaml = __nccwpck_require__(4281);
 const { Client4 } = __nccwpck_require__(797);
 
-const ASANA_CUSTOM_FIELD_STATUS_GID = core.getInput('asana-custom-field-gid', { required: true });
-
 const ASANA_STATUS_OPTIONS = {
     BACKLOG: '1209127535020553',
     TO_DO: '1209127535020554', // К выполнению
