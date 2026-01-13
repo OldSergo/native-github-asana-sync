@@ -14,6 +14,7 @@ const ASANA_STATUS_OPTIONS = {
     TESTING: '1209127535020557', // Тестирование
     NEEDS_REVISION: '1209127535020558', // На доработке
     DONE: '1209127535020559', // Готово
+    DEV_REVIEW: '1212749082732629'
 };
 
 const getEnumOptionGidByName = (statusName) => {
